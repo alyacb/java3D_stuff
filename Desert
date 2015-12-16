@@ -1,0 +1,247 @@
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
+import java.util.ArrayList;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.Material;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.TriangleArray;
+import javax.vecmath.Color3f;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
+
+/* @author: Alya Carina /*
+ * 
+ */
+
+public class Desert extends Equation3DShapes {
+    private float size, dist, zModx, zMody, zShift, xMod, yMod, xShift, yShift, shiny;
+    private Color3f ambient, diffuse, specular, emissive;
+    private Point3f[] pointArray;
+    private GeometryArray geoArray;
+    private Shape3D shape;
+    private BranchGroup surface;
+    private Vector3f position;
+    //default constructor
+    public Desert(){
+        size = 10f;
+        dist = 1f;
+        zModx = 0.3f;
+        zMody = 0.2f;
+        zShift = 0.2f;
+        xMod = 0.1f;
+        yMod = 0.1f;
+        xShift = -0.05f;
+        yShift = -0.05f;
+        ambient = new Color3f(0.5f, 0.4f, 0.1f);
+        diffuse = new Color3f(0.5f, 0.4f, 0.1f);
+        specular = new Color3f(1f, 1f, 1f);
+        emissive = new Color3f(0f, 0f, 0f);
+        shiny = 1.0f;
+        position = new Vector3f(0f, 0f, 0f);
+        calculateSurface();
+    }
+    public void setSize(float s){
+        size = s;
+    }
+    public void setDistance(float d){
+        dist = d;
+    }
+    public void setZxMod(float z){
+        zModx = z;
+    }
+    public void setZyMod(float z){
+        zMody = z;
+    }
+    public void setzShift(float z){
+        zShift = z;
+    }
+    public void setxMod(float x){
+        xMod = x;
+    }
+    public void setyMod(float y){
+        yMod = y;
+    }
+    public void setxShift(float x){
+        xShift = x;
+    }
+    public void setyShift(float y){
+        yShift = y;
+    }
+    public void setAmbient(Color3f c){
+        ambient = c;
+    }
+    public void setDiffuse(Color3f c){
+        diffuse = c;
+    }
+    public void setSpecular(Color3f c){
+        specular = c;
+    }
+    public void setEmissive(Color3f c){
+        emissive = c;
+    }
+    public void setShiny(float s){
+        shiny = s;
+    }
+    public float getSize(){
+        return size;
+    }
+    public float getDistance(){
+        return dist;
+    }
+    public float getZxMod(){
+        return zModx;
+    }
+    public float getZyMod(){
+        return zMody;
+    }
+    public float getzShift(){
+        return zShift;
+    }
+    public float getxMod(){
+        return xMod;
+    }
+    public float getyMod(){
+        return yMod;
+    }
+    public float getxShift(){
+        return xShift;
+    }
+    public float getyShift(){
+        return yShift;
+    }
+    public Color3f getAmbient(){
+        return ambient;
+    }
+    public Color3f getDiffuse(){
+        return diffuse;
+    }
+    public Color3f getSpecular(){
+        return specular;
+    }
+    public Color3f getEmissive(){
+        return emissive;
+    }
+    public float getShiny(){
+        return shiny;
+    }
+    @Override
+    public Vector3f getPosition(){
+        return position;
+    }
+    @Override
+    public void setPosition(Vector3f v){
+        position = v;
+    }
+    @Override
+    public GeometryArray getGeometry(){
+        return geoArray;
+    }
+    //@Override
+    //public void setGeometry(GeometryArray ga){
+        //geoArray = ga;
+    //}
+    @Override
+    public void calculateGeometry(){
+        int s = (int)Math.sqrt(pointArray.length);
+        
+        TriangleArray mosaic = new TriangleArray((pointArray.length-1)*6, TriangleArray.COORDINATES);
+        
+        int[] forbidden = new int[s-1];
+        for(int i=0; i<forbidden.length; i++){
+            forbidden[i] = s-1 + i*s;
+        }
+        int count = 0;
+        
+        boolean permitted = true;
+        for(int n = 0; n < pointArray.length-s; n++){
+            for(int i: forbidden) if(n==i) permitted = false;
+            if(permitted){
+                mosaic.setCoordinate(count, pointArray[n]);
+                count++;
+                mosaic.setCoordinate(count, pointArray[n+s]);
+                count++;
+                mosaic.setCoordinate(count, pointArray[n+1]);
+                count++;
+                mosaic.setCoordinate(count, pointArray[n+s]);
+                count++;
+                mosaic.setCoordinate(count, pointArray[n+s+1]);
+                count++;
+                mosaic.setCoordinate(count, pointArray[n+1]);
+                count++;
+            }
+            permitted = true;
+        }
+        
+        GeometryInfo info = new GeometryInfo(mosaic);
+        NormalGenerator gen = new NormalGenerator();
+        gen.generateNormals(info);               
+        geoArray = info.getGeometryArray();
+    }
+    @Override
+    public Shape3D getShape(){
+        return shape;
+    }
+    //@Override
+    //public void setShape(Shape3D s){
+        //shape = s;
+    //}
+    @Override
+    public void calculateShape(){ 
+        Appearance a = new Appearance();
+        a.setMaterial(new Material(ambient, diffuse, specular, emissive, shiny));
+        a.setColoringAttributes(new ColoringAttributes(new Color3f(1f, 1f, 1f), ColoringAttributes.NICEST)); 
+        shape = new Shape3D(geoArray, a);
+    }
+    @Override
+    public Point3f[] getPointArray(){
+        return pointArray;
+    }
+    //@Override
+    //public void setPointArray(Point3f[] pa){
+        //pointArray = pa;
+    //}
+    @Override
+    public void calculatePointArray(){
+        ArrayList<Point3f> pointsI = new ArrayList<>();
+        float x = -size, y = -size, z;
+        
+        while(x<size){
+            while(y<size){
+                z = zModx*(float)Math.random()*(float)Math.sin(x)+zMody*(float)Math.random()*(float)Math.cos(y) + zShift*(float)Math.random();
+                pointsI.add(new Point3f(x + xMod*(float)Math.random()+ xShift, y + yMod*(float)Math.random() + yShift, z));
+                y+=dist;
+            }
+            x+=dist;
+            y=-size;
+        }
+        
+        Point3f[] pointsII = new Point3f[pointsI.size()];
+        pointsII = pointsI.toArray(pointsII);
+        pointArray = pointsII;
+    }
+    @Override 
+    public BranchGroup getSurface(){
+        return surface;
+    }
+    //@Override
+    //public void setSurface(BranchGroup bg){
+        //surface = bg;
+    //}
+    private void updateAll(){
+        calculatePointArray();
+        calculateGeometry();
+        calculateShape();
+    }
+    @Override
+    public void calculateSurface() {
+        updateAll();
+        if (surface != null) surface.removeAllChildren();
+        surface = new BranchGroup();
+        surface.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
+        surface.setCapability(BranchGroup.ALLOW_DETACH);
+        surface.addChild(shape);  
+    }
+}
