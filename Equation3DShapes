@@ -1,0 +1,35 @@
+package tartarus;
+
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.Shape3D;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
+
+/* @author: Alya Carina /*
+ * 
+ */
+
+abstract class Equation3DShapes {
+    abstract Vector3f getPosition();
+    abstract void setPosition(Vector3f v);
+    
+    abstract void calculateGeometry();
+    abstract GeometryArray getGeometry();
+    //abstract void setGeometry(GeometryArray ga);
+    
+    abstract void calculateShape();
+    abstract Shape3D getShape();
+    //abstract void setShape(Shape3D s);
+    
+    abstract void calculateSurface();
+    abstract BranchGroup getSurface();
+    //abstract void setSurface(BranchGroup bg);
+    
+    abstract void calculatePointArray();
+    abstract Point3f[] getPointArray();
+    //abstract void setPointArray(Point3f[] pa);
+    
+    //normals calculated in the calculate pointArray method
+    //abstract Normal[] getNormals();
+}
