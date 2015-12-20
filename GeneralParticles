@@ -1,0 +1,114 @@
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
+import javax.vecmath.Vector3d;
+
+/**
+ *
+ * @author Alya Carina
+ */
+public class GeneralParticles {
+
+    private int number;
+    private Shape3D shape;
+    private TransformGroup[] positionList;
+    private BranchGroup ultimate;
+    
+    private final double REVOLUTION = 2*Math.PI;
+
+    public GeneralParticles(int n, Shape3D s) {
+        number = n;
+        shape = s;
+        positionList = new TransformGroup[n];
+        ultimate = new BranchGroup();
+
+        Transform3D t3d0 = new Transform3D();
+
+        Transform3D t3d0_rotX = new Transform3D();
+        t3d0_rotX.rotX(REVOLUTION * Math.random());
+
+        Transform3D t3d0_rotY = new Transform3D();
+        t3d0_rotY.rotY(REVOLUTION * Math.random());
+
+        Transform3D t3d0_rotZ = new Transform3D();
+        t3d0_rotZ.rotZ(REVOLUTION * Math.random());
+
+        t3d0.setTranslation(new Vector3d(Math.random(), Math.random(), Math.random()));
+        t3d0.mul(t3d0_rotX);
+        t3d0.mul(t3d0_rotY);
+        t3d0.mul(t3d0_rotZ);
+
+        positionList[0] = new TransformGroup(t3d0);
+        positionList[0].setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        positionList[0].addChild(s);
+        ultimate.addChild(positionList[0]);
+
+        for (int i = 1; i < n; i++) {
+            Transform3D t3d = new Transform3D();
+
+            Transform3D t3d_rotX = new Transform3D();
+            t3d_rotX.rotX(REVOLUTION * Math.random());
+
+            Transform3D t3d_rotY = new Transform3D();
+            t3d_rotY.rotY(REVOLUTION * Math.random());
+
+            Transform3D t3d_rotZ = new Transform3D();
+            t3d_rotZ.rotZ(REVOLUTION * Math.random());
+
+            t3d.setTranslation(new Vector3d(Math.random(), Math.random(), Math.random()));
+            t3d.mul(t3d_rotX);
+            t3d.mul(t3d_rotY);
+            t3d.mul(t3d_rotZ);
+
+            t3d.setTranslation(new Vector3d(Math.random(), Math.random(), Math.random()));
+
+            positionList[i] = (TransformGroup) positionList[0].cloneNode(true);
+            positionList[i].addChild(positionList[0].getChild(0).cloneNode(true));
+            positionList[i].setTransform(t3d);
+            ultimate.addChild(positionList[i]);
+        }
+    }
+
+    public BranchGroup getBranchGraph() {       
+        return ultimate;
+    }
+    
+    public Shape3D getParticleShape(){
+        return shape;
+    }
+    
+    public GeneralParticles setShape(Shape3D s){
+        return (new GeneralParticles(number, s));
+    }
+    
+    public void brownianMotion_OneStep() {
+        double rot_step_size = 0.5;
+        double trans_step_size = 0.01;
+        for (int i = 0; i < number; i++) {
+            Transform3D t3d_rotX = new Transform3D();
+            t3d_rotX.rotX(rot_step_size * (Math.random()-0.5));
+            
+            Transform3D t3d_rotY = new Transform3D();
+            t3d_rotY.rotY(rot_step_size * (Math.random()-0.5));
+
+            Transform3D t3d_rotZ = new Transform3D();
+            t3d_rotZ.rotZ(rot_step_size * (Math.random()-0.5));     
+            
+            Transform3D t3d = new Transform3D();
+            positionList[i].getTransform(t3d);
+            Vector3d current = new Vector3d();
+            t3d.get(current);
+            
+            t3d.mul(t3d_rotX);
+            t3d.mul(t3d_rotY);
+            t3d.mul(t3d_rotZ);
+            
+            t3d.setTranslation(new Vector3d(current.x+trans_step_size*(Math.random()-0.5), 
+                                            current.y+trans_step_size*(Math.random()-0.5), 
+                                            current.z+trans_step_size*(Math.random()-0.5)));
+
+            positionList[i].setTransform(t3d);
+        }
+    }
+}
