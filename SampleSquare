@@ -1,0 +1,48 @@
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.TriangleArray;
+import javax.vecmath.Point3f;
+
+/**
+ *
+ * @author Alya Carina
+ */
+public class SampleSquare{
+    private Shape3D square;
+    
+    public SampleSquare(){
+        Point3f [] pd = new Point3f[4]; 
+        pd[0] = new Point3f(0,0,0);
+        pd[1] = new Point3f(0.05f,0,0);
+        pd[2] = new Point3f(0,0.05f,0);
+        pd[3] = new Point3f(0.05f,0.05f,0);
+        
+        TriangleArray ta = new TriangleArray(12, TriangleArray.COORDINATES);
+        ta.setCoordinate(0, pd[0]);
+        ta.setCoordinate(1, pd[1]);
+        ta.setCoordinate(2, pd[2]);
+        ta.setCoordinate(3, pd[2]);
+        ta.setCoordinate(4, pd[1]);
+        ta.setCoordinate(5, pd[3]);
+        ta.setCoordinate(6, pd[3]);
+        ta.setCoordinate(7, pd[1]);
+        ta.setCoordinate(8, pd[2]);
+        ta.setCoordinate(9, pd[2]);
+        ta.setCoordinate(10, pd[1]);
+        ta.setCoordinate(11, pd[0]);
+        
+        GeometryInfo gi = new GeometryInfo(ta);
+        NormalGenerator ng = new NormalGenerator();
+        ng.generateNormals(gi);
+        GeometryArray ga = gi.getGeometryArray();
+        
+        square = new Shape3D(ga, new Appearance());
+    }
+    
+    public Shape3D getSquare(){
+        return square;
+    }
+}
