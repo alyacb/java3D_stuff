@@ -105,7 +105,7 @@ public class Editor extends Applet {
         return lights;
     }
     public static void main(String[] args) {
-        Editor it = new Editor();
-        MainFrame mf = new MainFrame(it, 1000, 500);
+        MainFrame mf = new MainFrame(new Editor(), 1000, 500);
+        mf.setTitle("Desert Editor");
     }
 } 
