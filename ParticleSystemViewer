@@ -5,10 +5,15 @@ import java.awt.BorderLayout;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.Transform3D;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
 import javax.swing.Timer;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -23,6 +28,7 @@ public class ParticleSystemViewer extends Applet {
     private PointParticles pointSystem;
     private BranchGroup particleNode, allFather;
     private JCheckBox pointParticles_check, squareParticles_check;
+    private JTextArea numParticles;
     private boolean squares, points;
 
     public ParticleSystemViewer() {
@@ -53,13 +59,13 @@ public class ParticleSystemViewer extends Applet {
         squareSystem = new GeneralParticles(100, s.getSquare());
         //particleNode.addChild(squareSystem.getBranchGraph());
         
-        pointSystem = new PointParticles(100);
+        pointSystem = new PointParticles(100, new Appearance());
         //particleNode.addChild(pointSystem.getBranchGraph());
         
         allFather.addChild(particleNode);
         homeOf3D.addBranchGraph(allFather);
 
-        Timer dimension4 = new Timer(60, new ActionListener() {
+        Timer dimension4 = new Timer(80, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 particleNode.detach();
@@ -81,6 +87,46 @@ public class ParticleSystemViewer extends Applet {
         add("Center", viewPort);
 
         Panel chooseParticles = new Panel();
+        
+        JLabel numParticles_label = new JLabel("Number of Particles:");
+        numParticles = new JTextArea("100", 1, 4);
+        numParticles.addKeyListener(new KeyListener(){
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = numParticles.getText();
+                    numParticles.setText(text.substring(0, text.length()-1));
+                    numParticles.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        int n = Integer.parseInt(numParticles.getText());
+                        SampleSquare s = new SampleSquare();
+                        squareSystem = new GeneralParticles(n, s.getSquare());
+                        //particleNode.addChild(squareSystem.getBranchGraph());
+                    
+                        pointSystem = new PointParticles(n, new Appearance());
+                        //particleNode.addChild(pointSystem.getBranchGraph());
+                        
+                    } catch(Exception e) {
+                        // Do nothing
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = numParticles.getText();
+                    numParticles.setText(text.substring(0, text.length()-1));
+                    numParticles.setCaretPosition(0);
+                }
+            }
+        });
 
         pointParticles_check = new JCheckBox("Point Particles");
         pointParticles_check.addActionListener(new ActionListener() {
@@ -98,6 +144,8 @@ public class ParticleSystemViewer extends Applet {
             }
         });
 
+        chooseParticles.add(numParticles_label);
+        chooseParticles.add(numParticles);
         chooseParticles.add(pointParticles_check);
         chooseParticles.add(squareParticles_check);
 
