@@ -13,12 +13,12 @@ import javax.vecmath.Point3f;
 public class SampleSquare{
     private Shape3D square;
     
-    public SampleSquare(){
+    public SampleSquare(float size){
         Point3f [] pd = new Point3f[4]; 
         pd[0] = new Point3f(0,0,0);
-        pd[1] = new Point3f(0.05f,0,0);
-        pd[2] = new Point3f(0,0.05f,0);
-        pd[3] = new Point3f(0.05f,0.05f,0);
+        pd[1] = new Point3f(size,0,0);
+        pd[2] = new Point3f(0,size,0);
+        pd[3] = new Point3f(size,size,0);
         
         TriangleArray ta = new TriangleArray(12, TriangleArray.COORDINATES);
         ta.setCoordinate(0, pd[0]);
