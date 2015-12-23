@@ -18,6 +18,7 @@ public class GeneralParticles {
     private final double REVOLUTION = 2*Math.PI;
 
     public GeneralParticles(int n, Shape3D s) {
+        if (n==0) return;
         number = n;
         shape = s;
         positionList = new TransformGroup[n];
@@ -83,8 +84,8 @@ public class GeneralParticles {
     }
     
     public void brownianMotion_OneStep() {
-        double rot_step_size = 0.5;
-        double trans_step_size = 0.01;
+        double rot_step_size = 0.05;
+        double trans_step_size = 0.001;
         for (int i = 0; i < number; i++) {
             Transform3D t3d_rotX = new Transform3D();
             t3d_rotX.rotX(rot_step_size * (Math.random()-0.5));
