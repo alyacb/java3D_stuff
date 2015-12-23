@@ -28,9 +28,9 @@ public class ParticleSystemViewer extends Applet {
     private PointParticles pointSystem;
     private BranchGroup particleNode, allFather;
     private JCheckBox pointParticles_check, squareParticles_check;
-    private JTextArea numParticles, particleSize;
+    private JTextArea numParticles_point, numParticles_general, particleSize;
     private boolean squares, points;
-    private int np;
+    private int np_point, np_general;
     private float ps;
 
     public ParticleSystemViewer() {
@@ -38,7 +38,8 @@ public class ParticleSystemViewer extends Applet {
 
         points = false;
         squares = false;
-        np = 100;
+        np_point = 100;
+        np_general = 100;
         ps = 0.05f;
 
         Canvas3D viewPort = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
@@ -59,11 +60,11 @@ public class ParticleSystemViewer extends Applet {
         particleNode = new BranchGroup();
         particleNode.setCapability(BranchGroup.ALLOW_DETACH);
         
-        SampleSquare sq1 = new SampleSquare(ps);
-        squareSystem = new GeneralParticles(np, sq1.getSquare());
+        SampleSquare sq1 = new SampleSquare(ps, new Appearance());
+        squareSystem = new GeneralParticles(np_general, sq1.getSquare());
         //particleNode.addChild(squareSystem.getBranchGraph());
         
-        pointSystem = new PointParticles(np, new Appearance());
+        pointSystem = new PointParticles(np_point, new Appearance());
         //particleNode.addChild(pointSystem.getBranchGraph());
         
         allFather.addChild(particleNode);
@@ -75,11 +76,11 @@ public class ParticleSystemViewer extends Applet {
                 particleNode.detach();
                 particleNode.removeAllChildren();
                 if (squares) {
-                    squareSystem.brownianMotion_OneStep();                                        
+                    squareSystem.brownianMotion_OneStep(0.05, 0.001);                                        
                     particleNode.addChild(squareSystem.getBranchGraph());
                 } 
                 if (points) {
-                    pointSystem.brownianMotion_OneStep();                                        
+                    pointSystem.brownianMotion_OneStep(0.01);                                        
                     particleNode.addChild(pointSystem.toShape());
                 }
                 allFather.addChild(particleNode);
@@ -92,15 +93,15 @@ public class ParticleSystemViewer extends Applet {
 
         Panel chooseParticles = new Panel();
         
-        JLabel numParticles_label = new JLabel("Number of Particles:");
-        numParticles = new JTextArea("100", 1, 4);
-        numParticles.addKeyListener(new KeyListener(){
+        JLabel numParticles_label_point = new JLabel("Number of PointParticles:");
+        numParticles_point = new JTextArea("100", 1, 4);
+        numParticles_point.addKeyListener(new KeyListener(){
             @Override
             public void keyTyped(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
-                    String text = numParticles.getText();
-                    numParticles.setText(text.substring(0, text.length()-1));
-                    numParticles.setCaretPosition(0);
+                    String text = numParticles_point.getText();
+                    numParticles_point.setText(text.substring(0, text.length()-1));
+                    numParticles_point.setCaretPosition(0);
                 }
             }
 
@@ -108,19 +109,14 @@ public class ParticleSystemViewer extends Applet {
             public void keyPressed(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     try {
-                        np = Integer.parseInt(numParticles.getText());
-                        SampleSquare sqn = new SampleSquare(ps);
-                        squareSystem = new GeneralParticles(np, sqn.getSquare());
-                        //particleNode.addChild(squareSystem.getBranchGraph());
+                        np_point = Integer.parseInt(numParticles_point.getText());
                     
-                        pointSystem = new PointParticles(np, new Appearance());
+                        pointSystem = new PointParticles(np_point, new Appearance());
                         //particleNode.addChild(pointSystem.getBranchGraph());
                         
                     } catch(Exception e) {
-                        numParticles.setText(np + " ");
-                        SampleSquare sqn = new SampleSquare(0.05f);
-                        squareSystem = new GeneralParticles(np, sqn.getSquare());
-                        pointSystem = new PointParticles(np, new Appearance());
+                        numParticles_point.setText(np_point + " ");
+                        pointSystem = new PointParticles(np_point, new Appearance());
                     }
                 }
             }
@@ -128,9 +124,48 @@ public class ParticleSystemViewer extends Applet {
             @Override
             public void keyReleased(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
-                    String text = numParticles.getText();
-                    numParticles.setText(text.substring(0, text.length()-1));
-                    numParticles.setCaretPosition(0);
+                    String text = numParticles_point.getText();
+                    numParticles_point.setText(text.substring(0, text.length()-1));
+                    numParticles_point.setCaretPosition(0);
+                }
+            }
+        });
+        
+        JLabel numParticles_label_general = new JLabel("Number of GeneralParticles:");
+        numParticles_general = new JTextArea("100", 1, 4);
+        numParticles_general.addKeyListener(new KeyListener(){
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = numParticles_general.getText();
+                    numParticles_general.setText(text.substring(0, text.length()-1));
+                    numParticles_general.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        np_general = Integer.parseInt(numParticles_general.getText());
+                        SampleSquare sqn = new SampleSquare(ps, new Appearance());
+                        squareSystem = new GeneralParticles(np_general, sqn.getSquare());
+                        //particleNode.addChild(squareSystem.getBranchGraph());
+                        
+                    } catch(Exception e) {
+                        numParticles_general.setText(np_general + " ");
+                        SampleSquare sqn = new SampleSquare(ps, new Appearance( ));
+                        squareSystem = new GeneralParticles(np_general, sqn.getSquare());
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = numParticles_general.getText();
+                    numParticles_general.setText(text.substring(0, text.length()-1));
+                    numParticles_general.setCaretPosition(0);
                 }
             }
         });
@@ -168,15 +203,14 @@ public class ParticleSystemViewer extends Applet {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     try {
                         ps = Float.parseFloat(particleSize.getText());
-                        SampleSquare sqn = new SampleSquare(ps);
-                        squareSystem = new GeneralParticles(np, sqn.getSquare());
+                        SampleSquare sqn = new SampleSquare(ps, new Appearance());
+                        squareSystem = new GeneralParticles(np_general, sqn.getSquare());
                         //particleNode.addChild(squareSystem.getBranchGraph());
                         
                     } catch(Exception e) {
                         particleSize.setText(ps + " ");
-                        SampleSquare sqn = new SampleSquare(ps);
-                        squareSystem = new GeneralParticles(np, sqn.getSquare());
-                        pointSystem = new PointParticles(np, new Appearance());
+                        SampleSquare sqn = new SampleSquare(ps, new Appearance());
+                        squareSystem = new GeneralParticles(np_general, sqn.getSquare());
                     }
                 }
             }
@@ -191,8 +225,10 @@ public class ParticleSystemViewer extends Applet {
             }        
         });
 
-        chooseParticles.add(numParticles_label);
-        chooseParticles.add(numParticles);
+        chooseParticles.add(numParticles_label_point);
+        chooseParticles.add(numParticles_point);
+        chooseParticles.add(numParticles_label_general);
+        chooseParticles.add(numParticles_general);
         chooseParticles.add(pointParticles_check);
         chooseParticles.add(squareParticles_check);
         chooseParticles.add(particleSize_label);
