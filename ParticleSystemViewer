@@ -28,14 +28,18 @@ public class ParticleSystemViewer extends Applet {
     private PointParticles pointSystem;
     private BranchGroup particleNode, allFather;
     private JCheckBox pointParticles_check, squareParticles_check;
-    private JTextArea numParticles;
+    private JTextArea numParticles, particleSize;
     private boolean squares, points;
+    private int np;
+    private float ps;
 
     public ParticleSystemViewer() {
         setLayout(new BorderLayout());
 
         points = false;
         squares = false;
+        np = 100;
+        ps = 0.05f;
 
         Canvas3D viewPort = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
         SimpleUniverse homeOf3D = new SimpleUniverse(viewPort);
@@ -55,11 +59,11 @@ public class ParticleSystemViewer extends Applet {
         particleNode = new BranchGroup();
         particleNode.setCapability(BranchGroup.ALLOW_DETACH);
         
-        SampleSquare s = new SampleSquare();
-        squareSystem = new GeneralParticles(100, s.getSquare());
+        SampleSquare sq1 = new SampleSquare(ps);
+        squareSystem = new GeneralParticles(np, sq1.getSquare());
         //particleNode.addChild(squareSystem.getBranchGraph());
         
-        pointSystem = new PointParticles(100, new Appearance());
+        pointSystem = new PointParticles(np, new Appearance());
         //particleNode.addChild(pointSystem.getBranchGraph());
         
         allFather.addChild(particleNode);
@@ -104,16 +108,19 @@ public class ParticleSystemViewer extends Applet {
             public void keyPressed(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     try {
-                        int n = Integer.parseInt(numParticles.getText());
-                        SampleSquare s = new SampleSquare();
-                        squareSystem = new GeneralParticles(n, s.getSquare());
+                        np = Integer.parseInt(numParticles.getText());
+                        SampleSquare sqn = new SampleSquare(ps);
+                        squareSystem = new GeneralParticles(np, sqn.getSquare());
                         //particleNode.addChild(squareSystem.getBranchGraph());
                     
-                        pointSystem = new PointParticles(n, new Appearance());
+                        pointSystem = new PointParticles(np, new Appearance());
                         //particleNode.addChild(pointSystem.getBranchGraph());
                         
                     } catch(Exception e) {
-                        // Do nothing
+                        numParticles.setText(np + " ");
+                        SampleSquare sqn = new SampleSquare(0.05f);
+                        squareSystem = new GeneralParticles(np, sqn.getSquare());
+                        pointSystem = new PointParticles(np, new Appearance());
                     }
                 }
             }
@@ -143,11 +150,53 @@ public class ParticleSystemViewer extends Applet {
                     squares  = squareParticles_check.isSelected();
             }
         });
+        
+        JLabel particleSize_label = new JLabel("Particle Size:");
+        particleSize = new JTextArea("0.05", 1 , 4);
+        particleSize.addKeyListener(new KeyListener(){
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = particleSize.getText();
+                    particleSize.setText(text.substring(0, text.length()-1));
+                    particleSize.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        ps = Float.parseFloat(particleSize.getText());
+                        SampleSquare sqn = new SampleSquare(ps);
+                        squareSystem = new GeneralParticles(np, sqn.getSquare());
+                        //particleNode.addChild(squareSystem.getBranchGraph());
+                        
+                    } catch(Exception e) {
+                        particleSize.setText(ps + " ");
+                        SampleSquare sqn = new SampleSquare(ps);
+                        squareSystem = new GeneralParticles(np, sqn.getSquare());
+                        pointSystem = new PointParticles(np, new Appearance());
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = particleSize.getText();
+                    particleSize.setText(text.substring(0, text.length()-1));
+                    particleSize.setCaretPosition(0);
+                }
+            }        
+        });
 
         chooseParticles.add(numParticles_label);
         chooseParticles.add(numParticles);
         chooseParticles.add(pointParticles_check);
         chooseParticles.add(squareParticles_check);
+        chooseParticles.add(particleSize_label);
+        chooseParticles.add(particleSize);
 
         add("South", chooseParticles);
     }
