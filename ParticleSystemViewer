@@ -2,6 +2,7 @@ import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import java.applet.Applet;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,10 +12,13 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.Transform3D;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.Timer;
+import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
@@ -23,24 +27,38 @@ import javax.vecmath.Vector3d;
  * @author Alya Carina
  */
 public class ParticleSystemViewer extends Applet {
-
+    
+    private Color3f point_look;
     private GeneralParticles squareSystem;
     private PointParticles pointSystem;
     private BranchGroup particleNode, allFather;
     private JCheckBox pointParticles_check, squareParticles_check;
-    private JTextArea numParticles_point, numParticles_general, particleSize;
+    private JTextArea numParticles_point, numParticles_general, particleSize, brownian_general_trans, brownian_general_rot, brownian_point,
+           red_point, green_point, blue_point; 
     private boolean squares, points;
     private int np_point, np_general;
-    private float ps;
-
-    public ParticleSystemViewer() {
-        setLayout(new BorderLayout());
-
+    private float ps, rp, gp, bp;
+    private double step_size_point, step_size_general, angle_size_general;
+    
+    private void initialize(){
         points = false;
         squares = false;
         np_point = 100;
         np_general = 100;
         ps = 0.05f;
+        step_size_point = 0.05;
+        step_size_general = 0.01;
+        angle_size_general = 0.1;
+        rp = 1f;
+        gp = 0f;
+        bp = 0f;
+        point_look= new Color3f(rp, gp, bp);
+    }
+
+    public ParticleSystemViewer() {
+        setLayout(new BorderLayout());
+
+        initialize();
 
         Canvas3D viewPort = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
         SimpleUniverse homeOf3D = new SimpleUniverse(viewPort);
@@ -56,17 +74,15 @@ public class ParticleSystemViewer extends Applet {
         allFather = new BranchGroup();
         allFather.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
         allFather.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
-        
+
         particleNode = new BranchGroup();
         particleNode.setCapability(BranchGroup.ALLOW_DETACH);
-        
+
         SampleSquare sq1 = new SampleSquare(ps, new Appearance());
         squareSystem = new GeneralParticles(np_general, sq1.getSquare());
-        //particleNode.addChild(squareSystem.getBranchGraph());
-        
-        pointSystem = new PointParticles(np_point, new Appearance());
-        //particleNode.addChild(pointSystem.getBranchGraph());
-        
+
+        pointSystem = new PointParticles(np_point, point_look);
+
         allFather.addChild(particleNode);
         homeOf3D.addBranchGraph(allFather);
 
@@ -76,11 +92,11 @@ public class ParticleSystemViewer extends Applet {
                 particleNode.detach();
                 particleNode.removeAllChildren();
                 if (squares) {
-                    squareSystem.brownianMotion_OneStep(0.05, 0.001);                                        
+                    squareSystem.brownianMotion_OneStep(angle_size_general, step_size_general);
                     particleNode.addChild(squareSystem.getBranchGraph());
-                } 
+                }
                 if (points) {
-                    pointSystem.brownianMotion_OneStep(0.01);                                        
+                    pointSystem.brownianMotion_OneStep(step_size_point);
                     particleNode.addChild(pointSystem.toShape());
                 }
                 allFather.addChild(particleNode);
@@ -91,16 +107,50 @@ public class ParticleSystemViewer extends Applet {
 
         add("Center", viewPort);
 
-        Panel chooseParticles = new Panel();
+        Panel options_point = make_point_panel();
+        Panel options_general = make_general_panel();        
+
+        add("West", options_point);
+        add("East", options_general);
+    }
+    
+    private Panel make_point_panel(){
+        Panel options_point = new Panel();
+        options_point.setLayout(new BoxLayout(options_point, BoxLayout.Y_AXIS));
+        
+        pointParticles_check = new JCheckBox("Point Particles");
+        pointParticles_check.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                points = pointParticles_check.isSelected();
+            }
+        });      
+        pointParticles_check.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        options_point.add(pointParticles_check);
+        
+        options_point.add(make_num_point_panel());
+        
+        options_point.add(make_brownian_point_panel());
+        
+        JLabel point_color = new JLabel("PointParticles Color: ");
+        point_color.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        options_point.add(point_color);
+        options_point.add(make_point_color_panel());
+        
+        return options_point;
+    }
+    
+    private Panel make_num_point_panel(){
+        Panel num_point = new Panel();
         
         JLabel numParticles_label_point = new JLabel("Number of PointParticles:");
-        numParticles_point = new JTextArea("100", 1, 4);
-        numParticles_point.addKeyListener(new KeyListener(){
+        numParticles_point = new JTextArea("100", 1, 6);
+        numParticles_point.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     String text = numParticles_point.getText();
-                    numParticles_point.setText(text.substring(0, text.length()-1));
+                    numParticles_point.setText(text.substring(0, text.length() - 1));
                     numParticles_point.setCaretPosition(0);
                 }
             }
@@ -110,13 +160,12 @@ public class ParticleSystemViewer extends Applet {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     try {
                         np_point = Integer.parseInt(numParticles_point.getText());
-                    
-                        pointSystem = new PointParticles(np_point, new Appearance());
-                        //particleNode.addChild(pointSystem.getBranchGraph());
-                        
-                    } catch(Exception e) {
+
+                        pointSystem = new PointParticles(np_point, point_look);
+
+                    } catch (Exception e) {
                         numParticles_point.setText(np_point + " ");
-                        pointSystem = new PointParticles(np_point, new Appearance());
+                        pointSystem = new PointParticles(np_point, point_look);
                     }
                 }
             }
@@ -125,20 +174,230 @@ public class ParticleSystemViewer extends Applet {
             public void keyReleased(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     String text = numParticles_point.getText();
-                    numParticles_point.setText(text.substring(0, text.length()-1));
+                    numParticles_point.setText(text.substring(0, text.length() - 1));
                     numParticles_point.setCaretPosition(0);
                 }
             }
         });
         
+        num_point.add(numParticles_label_point);
+        num_point.add(numParticles_point);
+        
+        return num_point;
+    }
+    
+    private Panel make_brownian_point_panel(){
+        Panel brownian_point_panel = new Panel();
+        
+        JLabel brownian_point_label = new JLabel("PointParticle Brownian Step Size");
+        brownian_point = new JTextArea("0.05", 1, 6);
+        brownian_point.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = particleSize.getText();
+                    brownian_point.setText(text.substring(0, text.length() - 1));
+                    brownian_point.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                try {
+                    step_size_point = Double.parseDouble(brownian_point.getText());
+                } catch (Exception e) {
+                    brownian_point.setText(step_size_point + " ");
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = brownian_point.getText();
+                    brownian_point.setText(text.substring(0, text.length() - 1));
+                    brownian_point.setCaretPosition(0);
+                }
+            }
+        }); 
+        brownian_point_panel.add(brownian_point_label);
+        brownian_point_panel.add(brownian_point);
+        
+        return brownian_point_panel;
+    }
+    
+    private JPanel make_point_color_panel(){
+        JPanel color_point = new JPanel();
+        color_point.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        color_point.setLayout(new BoxLayout(color_point, BoxLayout.Y_AXIS));
+        
+        color_point.add(make_red_point_panel());
+        color_point.add(make_green_point_panel());
+        color_point.add(make_blue_point_panel());
+        
+        return color_point;
+    }
+    
+    private Panel make_red_point_panel(){
+        Panel red_pp = new Panel();
+        JLabel red = new JLabel("R: ");
+        red_point = new JTextArea("1", 1, 6);
+        red_point.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = red_point.getText();
+                    red_point.setText(text.substring(0, text.length() - 1));
+                    red_point.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        rp = Float.parseFloat(red_point.getText());
+                        point_look = new Color3f(rp, gp, bp);
+                        pointSystem = new PointParticles(np_point, point_look);
+                    } catch (Exception e) {
+                        red_point.setText(rp + " ");
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = red_point.getText();
+                    red_point.setText(text.substring(0, text.length() - 1));
+                    red_point.setCaretPosition(0);
+                }
+            }
+        });
+        red_pp.add(red);
+        red_pp.add(red_point);
+        
+        return red_pp;
+    }
+    
+    private Panel make_green_point_panel(){
+        Panel green_pp = new Panel();
+        JLabel green = new JLabel("G: ");
+        green_point = new JTextArea("0", 1, 6);
+        green_point.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = green_point.getText();
+                    green_point.setText(text.substring(0, text.length() - 1));
+                    green_point.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        gp = Float.parseFloat(green_point.getText());
+                        point_look = new Color3f(rp, gp, bp);
+                        pointSystem = new PointParticles(np_point, point_look);
+                    } catch (Exception e) {
+                        green_point.setText(gp + " ");
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = green_point.getText();
+                    green_point.setText(text.substring(0, text.length() - 1));
+                    green_point.setCaretPosition(0);
+                }
+            }
+        });
+        green_pp.add(green);
+        green_pp.add(green_point);
+        
+        return green_pp;
+    }
+    
+    private Panel make_blue_point_panel(){
+        Panel blue_pp = new Panel();
+        JLabel blue = new JLabel("B: ");
+        blue_point = new JTextArea("0", 1, 6);
+        blue_point.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = blue_point.getText();
+                    blue_point.setText(text.substring(0, text.length() - 1));
+                    blue_point.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        bp = Float.parseFloat(blue_point.getText());
+                        point_look = new Color3f(rp, gp, bp);
+                        pointSystem = new PointParticles(np_point, point_look);
+                    } catch (Exception e) {
+                        blue_point.setText(bp + " ");
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = blue_point.getText();
+                    blue_point.setText(text.substring(0, text.length() - 1));
+                    blue_point.setCaretPosition(0);
+                }
+            }
+        });
+        blue_pp.add(blue);
+        blue_pp.add(blue_point);
+        
+        return blue_pp;
+    }
+    
+    private Panel make_general_panel(){
+        Panel options_general = new Panel();
+        options_general.setLayout(new BoxLayout(options_general, BoxLayout.Y_AXIS));
+        
+        squareParticles_check = new JCheckBox("Square Particles");
+        squareParticles_check.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                squares = squareParticles_check.isSelected();
+            }
+        });
+        options_general.add(squareParticles_check);
+        
+        options_general.add(make_num_general_panel());
+        
+        options_general.add(make_particle_size_panel());
+        
+        options_general.add(make_general_trans_panel());
+        
+        options_general.add(make_general_rot_panel());
+        
+        return options_general;
+    }
+    
+    private Panel make_num_general_panel(){
+        Panel num_general = new Panel();
+        
         JLabel numParticles_label_general = new JLabel("Number of GeneralParticles:");
-        numParticles_general = new JTextArea("100", 1, 4);
-        numParticles_general.addKeyListener(new KeyListener(){
+        numParticles_general = new JTextArea("100", 1, 6);
+        numParticles_general.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     String text = numParticles_general.getText();
-                    numParticles_general.setText(text.substring(0, text.length()-1));
+                    numParticles_general.setText(text.substring(0, text.length() - 1));
                     numParticles_general.setCaretPosition(0);
                 }
             }
@@ -151,10 +410,10 @@ public class ParticleSystemViewer extends Applet {
                         SampleSquare sqn = new SampleSquare(ps, new Appearance());
                         squareSystem = new GeneralParticles(np_general, sqn.getSquare());
                         //particleNode.addChild(squareSystem.getBranchGraph());
-                        
-                    } catch(Exception e) {
+
+                    } catch (Exception e) {
                         numParticles_general.setText(np_general + " ");
-                        SampleSquare sqn = new SampleSquare(ps, new Appearance( ));
+                        SampleSquare sqn = new SampleSquare(ps, new Appearance());
                         squareSystem = new GeneralParticles(np_general, sqn.getSquare());
                     }
                 }
@@ -164,36 +423,28 @@ public class ParticleSystemViewer extends Applet {
             public void keyReleased(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     String text = numParticles_general.getText();
-                    numParticles_general.setText(text.substring(0, text.length()-1));
+                    numParticles_general.setText(text.substring(0, text.length() - 1));
                     numParticles_general.setCaretPosition(0);
                 }
             }
         });
-
-        pointParticles_check = new JCheckBox("Point Particles");
-        pointParticles_check.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                    points  = pointParticles_check.isSelected();
-            }
-        });
-
-        squareParticles_check = new JCheckBox("Square Particles");
-        squareParticles_check.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                    squares  = squareParticles_check.isSelected();
-            }
-        });
+        num_general.add(numParticles_label_general);
+        num_general.add(numParticles_general);
+        
+        return num_general;
+    }
+    
+    private Panel make_particle_size_panel(){
+        Panel particle_size_panel = new Panel();
         
         JLabel particleSize_label = new JLabel("Particle Size:");
-        particleSize = new JTextArea("0.05", 1 , 4);
-        particleSize.addKeyListener(new KeyListener(){
+        particleSize = new JTextArea("0.05", 1, 6);
+        particleSize.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     String text = particleSize.getText();
-                    particleSize.setText(text.substring(0, text.length()-1));
+                    particleSize.setText(text.substring(0, text.length() - 1));
                     particleSize.setCaretPosition(0);
                 }
             }
@@ -206,8 +457,8 @@ public class ParticleSystemViewer extends Applet {
                         SampleSquare sqn = new SampleSquare(ps, new Appearance());
                         squareSystem = new GeneralParticles(np_general, sqn.getSquare());
                         //particleNode.addChild(squareSystem.getBranchGraph());
-                        
-                    } catch(Exception e) {
+
+                    } catch (Exception e) {
                         particleSize.setText(ps + " ");
                         SampleSquare sqn = new SampleSquare(ps, new Appearance());
                         squareSystem = new GeneralParticles(np_general, sqn.getSquare());
@@ -219,26 +470,103 @@ public class ParticleSystemViewer extends Applet {
             public void keyReleased(KeyEvent ke) {
                 if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
                     String text = particleSize.getText();
-                    particleSize.setText(text.substring(0, text.length()-1));
+                    particleSize.setText(text.substring(0, text.length() - 1));
                     particleSize.setCaretPosition(0);
                 }
-            }        
+            }
+        });
+        
+        particle_size_panel.add(particleSize_label);
+        particle_size_panel.add(particleSize);
+        
+        return particle_size_panel;
+    }
+    
+    private Panel make_general_trans_panel(){
+        Panel particle_trans_panel = new Panel();
+        
+        JLabel brownian_general_trans_label = new JLabel("GeneralParticle Brownian Translation Size:");
+        brownian_general_trans = new JTextArea("0.01", 1, 6);
+        brownian_general_trans.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = brownian_general_trans.getText();
+                    brownian_general_trans.setText(text.substring(0, text.length() - 1));
+                    brownian_general_trans.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                try {
+                    step_size_general = Double.parseDouble(brownian_general_trans.getText());
+                } catch (Exception e) {
+                    brownian_general_trans.setText(step_size_general + " ");
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = brownian_general_trans.getText();
+                    brownian_general_trans.setText(text.substring(0, text.length() - 1));
+                    brownian_general_trans.setCaretPosition(0);
+                }
+            }
+        });
+        
+        particle_trans_panel.add(brownian_general_trans_label);
+        particle_trans_panel.add(brownian_general_trans);
+        
+        return particle_trans_panel;
+    }
+    
+    private Panel make_general_rot_panel(){
+        Panel general_rot_panel = new Panel();
+        
+        JLabel brownian_general_rot_label = new JLabel("GeneralParticle Brownian Rotation Size:");
+        brownian_general_rot = new JTextArea("0.05", 1, 6);
+        brownian_general_rot.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = brownian_general_rot.getText();
+                    brownian_general_rot.setText(text.substring(0, text.length() - 1));
+                    brownian_general_rot.setCaretPosition(0);
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        angle_size_general = Double.parseDouble(brownian_general_rot.getText());
+                    } catch (Exception e) {
+                        brownian_general_rot.setText(angle_size_general + " ");
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = brownian_general_rot.getText();
+                    brownian_general_rot.setText(text.substring(0, text.length() - 1));
+                    brownian_general_rot.setCaretPosition(0);
+                }
+            }
         });
 
-        chooseParticles.add(numParticles_label_point);
-        chooseParticles.add(numParticles_point);
-        chooseParticles.add(numParticles_label_general);
-        chooseParticles.add(numParticles_general);
-        chooseParticles.add(pointParticles_check);
-        chooseParticles.add(squareParticles_check);
-        chooseParticles.add(particleSize_label);
-        chooseParticles.add(particleSize);
-
-        add("South", chooseParticles);
+        general_rot_panel.add(brownian_general_rot_label);
+        general_rot_panel.add(brownian_general_rot);
+        
+        return general_rot_panel;
     }
 
     public static void main(String[] args) {
         MainFrame mf = new MainFrame(new ParticleSystemViewer(), 500, 500);
+        mf.setExtendedState(MainFrame.MAXIMIZED_BOTH);
         mf.setTitle("Particle System Viewer: Brownian Motion");
     }
 }
